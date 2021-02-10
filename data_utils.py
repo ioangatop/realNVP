@@ -9,6 +9,75 @@ import torch.utils.data as data
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 import numpy as np
+import requests
+import shutil
+import tarfile
+import os
+
+
+class Imagenette:
+    data_size = (106551014, 205511341)  # (image folder, image folder + .tar file)
+    resources = 'https://s3.amazonaws.com/fast-ai-imageclas/imagenette2-160.tgz'
+    dir2classes = {'n01440764':'tench', 'n02102040':'English springer', 'n02979186':'cassette player', 
+                   'n03000684': 'chain saw', 'n03028079': 'church', 'n03394916': 'French horn', 
+                   'n03417042': 'garbage truck', 'n03425413': 'gas pump', 'n03445777': 'golf ball',
+                   'n03888257': 'parachute'}
+
+    def __init__(self, root):
+        super().__init__()
+        self.root = root
+
+        if self.dataset_exists():
+            print('Files already downloaded and verified')
+        else:
+            self.download()
+
+    def dataset_exists(self, eps=1):
+        """ Check if folder exists via folder size. """
+        if not os.path.exists(self.root):
+            return False
+
+        total_size = 0
+        for path, _, files in os.walk(self.root):
+            for f in files:
+                fp = os.path.join(path, f)
+                total_size += os.path.getsize(fp)
+
+        size1 = int(self.data_size[0]/1000000)
+        size2 = int(self.data_size[1]/1000000)
+        total_size = int(total_size/1000000)
+        return (size1-eps <= total_size <= size1+eps) or (size2-eps <= total_size <= size2+eps)
+
+    @staticmethod
+    def extract(tar_url, extract_path='.'):
+        tar = tarfile.open(tar_url, 'r')
+        for item in tar:
+            tar.extract(item, extract_path)
+            if item.name.find(".tgz") != -1 or item.name.find(".tar") != -1:
+                extract(item.name, "./" + item.name[:item.name.rfind('/')])
+
+    def download(self):
+        if self.dataset_exists():
+            print('Files already downloaded and verified')
+            return
+
+        # create root folder
+        if not os.path.exists(self.root):
+            os.makedirs(self.root)
+
+        # download dataset
+        print('{:<2} {:<4}'.format('-->', 'Downloading dataset...'))
+        local_filename = os.path.join(self.root, self.resources.split('/')[-1])
+        with requests.get(self.resources, stream=True) as r:
+            with open(local_filename, 'wb') as f:
+                shutil.copyfileobj(r.raw, f)
+        print('{:<2} {:<4}'.format('-->', 'Downloading Complite!'))
+
+        # extract it
+        print('{:<2} {:<4}'.format('-->', 'Extracting images...'))
+        self.extract(os.path.join(self.root, 'imagenette2-160.tgz'), os.path.dirname(self.root))
+        print('{:<2} {:<4}'.format('-->', 'Extracting Complite!'))
+
 
 class DataInfo():
     def __init__(self, name, channel, size):
@@ -31,6 +100,9 @@ def load(dataset):
     Returns:
         a torch dataset and its associated information.
     """
+    if not os.path.exists('./data'):
+        os.makedirs('./data')
+
     if dataset == 'cifar10':    # 3 x 32 x 32
         data_info = DataInfo(dataset, 3, 32)
         transform = transforms.Compose(
@@ -49,7 +121,7 @@ def load(dataset):
              transforms.Resize(64), 
              transforms.RandomHorizontalFlip(p=0.5), 
              transforms.ToTensor()])
-        train_set = datasets.ImageFolder('../../data/CelebA/train', 
+        train_set = datasets.ImageFolder('./data/CelebA/train', 
             transform=transform)
         [train_split, val_split] = data.random_split(train_set, [150000, 12770])
 
@@ -70,6 +142,17 @@ def load(dataset):
         train_set = datasets.ImageFolder('../../data/ImageNet64/train', 
             transform=transform)
         [train_split, val_split] = data.random_split(train_set, [1250000, 31149])
+
+    elif dataset == 'imnete64':
+        Imagenette('./data/imagenette2-160')
+        data_info = DataInfo(dataset, 3, 64)
+        transform = transforms.Compose(
+            [transforms.Resize((64, 64)),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.ToTensor()])
+        train_set = datasets.ImageFolder('./data/imagenette2-160/train', 
+            transform=transform)
+        [train_split, val_split] = data.random_split(train_set, [8049, 1420])
 
     return train_split, val_split, data_info
 

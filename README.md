@@ -56,10 +56,14 @@ Code runs on a single GPU and has been tested with
 - numpy 1.15.4
 
 ```
-python train.py --dataset=cifar10 --batch_size=64 --base_dim=64 --res_blocks=8 --max_iter=80000
-python train.py --dataset=celeba --batch_size=64 --base_dim=32 --res_blocks=2 --max_iter=60000
-python train.py --dataset=imnet32 --batch_size=64 --base_dim=32 --res_blocks=4 --max_iter=80000
-python train.py --dataset=imnet64 --batch_size=64 --base_dim=32 --res_blocks=2 --max_iter=60000 
+python train.py --dataset=cifar10 --batch_size=64 --base_dim=64 --res_blocks=8 --max_epoch=80000
+python train.py --dataset=celeba --batch_size=64 --base_dim=32 --res_blocks=2 --max_epoch=60000
+python train.py --dataset=imnet32 --batch_size=64 --base_dim=32 --res_blocks=4 --max_epoch=80000
+python train.py --dataset=imnet64 --batch_size=64 --base_dim=32 --res_blocks=2 --max_epoch=60000 
 ```
 
 
+### HERE:
+```
+python train.py --dataset=imnete64 --batch_size=64 --base_dim=32 --res_blocks=2 --max_epoch=60000
+```

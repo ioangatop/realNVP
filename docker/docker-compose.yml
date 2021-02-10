@@ -1,0 +1,40 @@
+version: "2.3"
+
+
+services:
+
+    base:
+        image: realnvp:cuda102
+        build:
+            context: ..
+            dockerfile: docker/Dockerfile
+            args:
+                USER_ID: ${USER_ID:-1000}
+        container_name: realnvp-base-container
+        ipc: host
+        runtime: nvidia
+        shm_size: "8gb"
+        ulimits:
+            memlock: -1
+            stack: 67108864
+        volumes:
+            - $PWD:/workspace
+            - /mnt/data:/mnt/data
+            - /media:/media
+            - /tmp/.X11-unix:/tmp/.X11-unix:ro
+        environment:
+            - DEBUG_COLORS="true"
+            - TERM=xterm-256color
+            - COLORTERM=truecolor
+            - DISPLAY=${DISPLAY:-''}
+            - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+
+
+    dev:
+        container_name: realnvp-dev-container
+        extends:
+            service: base
+        ports:
+            - ${PORT:-6006}:${PORT:-6006}
+        stdin_open: true
+        tty: true
